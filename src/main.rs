@@ -122,29 +122,33 @@ impl Parser {
         }
     }
 
-    fn additonal_ops(&mut self, add_pos: usize) -> Result<usize, GrammerError> {
-        if self.pos + 1 >= self.tokens.len() {
-            return Err(GrammerError::UnexpectedEOL);
+    fn additonal_ops(&mut self, initial_pos: usize) -> Result<usize, GrammerError> {
+        let mut add_pos = initial_pos;
+        loop {
+            match self.tokens[self.pos] {
+                Token::Plus => {
+                    if let Token::Number(i) = self.tokens[self.pos + 1] {
+                        println!("\t%{} = add i32 {}, %{}", self.num, i, add_pos);
+                    } else {
+                        return Err(GrammerError::UnexpectedToken);
+                    }
+                },
+                Token::Minus => {
+                    if let Token::Number(i) = self.tokens[self.pos + 1] {
+                        println!("\t%{} = sub i32 {}, %{}", self.num, i, add_pos);
+                    } else {
+                        return Err(GrammerError::UnexpectedToken);
+                    }
+                },
+                Token::End => {
+                    break;
+                },
+                _ => return Err(GrammerError::UnexpectedToken),
+            }
+            self.pos += 2;
+            self.num += 1;
+            add_pos += 1;
         }
-        match self.tokens[self.pos] {
-            Token::Plus => {
-                if let Token::Number(i) = self.tokens[self.pos + 1] {
-                    println!("\t%{} = add i32 {}, %{}", self.num, i, add_pos);
-                } else {
-                    return Err(GrammerError::UnexpectedToken);
-                }
-            },
-            Token::Minus => {
-                if let Token::Number(i) = self.tokens[self.pos + 1] {
-                    println!("\t%{} = sub i32 %{}, %{}", self.num, i, add_pos);
-                } else {
-                    return Err(GrammerError::UnexpectedToken);
-                }
-            },
-            _ => return Err(GrammerError::UnexpectedToken),
-        }
-        self.pos += 2;
-        self.num += 1;
         Ok(self.num)
     }
 }
