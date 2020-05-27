@@ -41,7 +41,7 @@ impl<'a> Lexer<'a> {
             return Ok(Token::End);
         }
         match self.input[self.pos] {
-            b'0'..=b'9' => Ok(Token::Number(self.lex_number())),
+            b'0'..=b'9' => self.lex_number(),
             b'+' => self.lex_plus(),
             b'-' => self.lex_minus(),
             _ => Err(GrammerError::UnexpectedToken)
@@ -58,11 +58,12 @@ impl<'a> Lexer<'a> {
         Ok(Token::Minus)
     }
 
-    fn lex_number(&mut self) -> i32 {
+    fn lex_number(&mut self) -> Result<Token, GrammerError> {
         let start = self.pos;
         let end = self.recognize_multiple_chars(|b| b"0123456789".contains(&b));
         self.pos = end;
-        std::str::from_utf8(&self.input[start..end]).unwrap().parse::<i32>().unwrap()
+        let number = std::str::from_utf8(&self.input[start..end]).unwrap().parse::<i32>().unwrap();
+        Ok(Token::Number(number))
     }
 
     fn recognize_multiple_chars(&self, mut f: impl FnMut(u8) -> bool) -> usize {
