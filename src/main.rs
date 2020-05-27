@@ -37,6 +37,9 @@ impl<'a> Lexer<'a> {
     }
 
     fn next_token(&mut self) -> Result<Token, GrammerError> {
+        while self.pos < self.input.len() && self.input[self.pos] == b' ' {
+            self.pos += 1;
+        }
         if self.pos >= self.input.len() {
             return Ok(Token::End);
         }
@@ -149,6 +152,10 @@ impl Parser {
             self.num += 1;
             add_pos += 1;
         }
+        Ok(self.num)
+    }
+
+    fn multiplitive_ops(&mut self, initial_pos: usize) -> Result<usize, GrammerError> {
         Ok(self.num)
     }
 }
