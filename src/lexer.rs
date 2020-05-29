@@ -6,11 +6,15 @@ pub struct Token {
     pub pos: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TokenKind {
     Number(i32),
     Plus,
     Minus,
+    Multiply,
+    Devide,
+    LParen,
+    RParen,
     End,
 }
 
@@ -41,6 +45,10 @@ impl<'a> Lexer<'a> {
             b'0'..=b'9' => self.lex_number(),
             b'+' => self.lex_plus(),
             b'-' => self.lex_minus(),
+            b'*' => self.lex_multply(),
+            b'/' => self.lex_devide(),
+            b'(' => self.lex_lparen(),
+            b')' => self.lex_rparen(),
             _ => Err(QccError{
                 kind: ErrorType::UnexpectedChar,
                 pos: self.pos,
@@ -61,6 +69,38 @@ impl<'a> Lexer<'a> {
         self.pos += 1;
         Ok(Token{
             kind: TokenKind::Minus,
+            pos: self.pos -1,
+        })
+    }
+
+    fn lex_multply(&mut self) -> Result<Token, QccError> {
+        self.pos += 1;
+        Ok(Token{
+            kind: TokenKind::Multiply,
+            pos: self.pos -1,
+        })
+    }
+
+    fn lex_devide(&mut self) -> Result<Token, QccError> {
+        self.pos += 1;
+        Ok(Token {
+            kind: TokenKind::Devide,
+            pos: self.pos -1,
+        })
+    }
+
+    fn lex_lparen(&mut self) -> Result<Token, QccError> {
+        self.pos += 1;
+        Ok(Token {
+            kind: TokenKind::LParen,
+            pos: self.pos -1,
+        })
+    }
+
+    fn lex_rparen(&mut self) -> Result<Token, QccError> {
+        self.pos += 1;
+        Ok(Token {
+            kind: TokenKind::RParen,
             pos: self.pos -1,
         })
     }

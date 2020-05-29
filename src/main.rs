@@ -1,6 +1,7 @@
 mod error;
 mod parser;
 mod lexer;
+mod token_tree;
 
 use error::{ QccError };
 use parser::Parser;
