@@ -14,7 +14,17 @@ impl TokenTree {
     pub fn new(s: &str) -> Result<TokenTree, QccError> {
         let list = get_token_list(s)?;
         let mut n = 0;
-        TokenTree::expr(&mut n, &list)
+        let ret = TokenTree::expr(&mut n, &list)?;
+        match list[n].kind {
+            TokenKind::End => Ok(ret),
+            _ => {
+                Err(QccError {
+                    kind: ErrorType::UnexpectedToken,
+                    pos: list[n].pos,
+                    message: String::from("unexpected EOF"),
+                })
+            }
+        }
     }
 
     fn primary(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
@@ -38,12 +48,13 @@ impl TokenTree {
 
     fn mul(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
         let mut token = TokenTree::primary(n, list)?;
-        let m = *n;
 
         loop {
+            let m = *n;
             let now = list[m].clone();
             match now.kind {
                 TokenKind::Multiply => {
+                    *n += 1;
                     token = TokenTree {
                         kind: now.kind,
                         pos: now.pos,
@@ -52,6 +63,7 @@ impl TokenTree {
                     };
                 },
                 TokenKind::Devide => {
+                    *n += 1;
                     token = TokenTree {
                         kind: now.kind,
                         pos: now.pos,
@@ -61,18 +73,18 @@ impl TokenTree {
                 },
                 _ => return Ok(token),
             }
-            *n += 1;
         }
     }
 
     fn expr(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
         let mut token = TokenTree::mul(n, list)?;
-        let m = *n;
 
         loop {
+            let m = *n;
             let now = list[m].clone();
             match now.kind {
-                TokenKind::Multiply => {
+                TokenKind::Plus => {
+                    *n += 1;
                     token = TokenTree {
                         kind: now.kind,
                         pos: now.pos,
@@ -80,7 +92,8 @@ impl TokenTree {
                         rhs: Some(Rc::new(RefCell::new(TokenTree::mul(n, list)?))),
                     };
                 },
-                TokenKind::Devide => {
+                TokenKind::Minus => {
+                    *n += 1;
                     token = TokenTree {
                         kind: now.kind,
                         pos: now.pos,
@@ -90,7 +103,6 @@ impl TokenTree {
                 },
                 _ => return Ok(token),
             }
-            *n += 1;
         }
     }
 }

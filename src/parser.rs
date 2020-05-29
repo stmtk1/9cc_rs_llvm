@@ -23,6 +23,7 @@ impl Parser {
     }
 
     fn alloc(&mut self) -> Result<usize, QccError> {
+        /*
         if let TokenKind::Number(i) = self.tokens.kind {
             println!("\t%{} = alloca i32, align 4", self.num);
             println!("\tstore i32 {}, i32* %{}, align 4", i, self.num);
@@ -37,6 +38,8 @@ impl Parser {
                 message: String::from("This expression expected number"),
             })
         }
+        */
+        Ok(0)
     }
 
     /*
