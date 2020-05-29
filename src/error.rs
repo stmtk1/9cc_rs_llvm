@@ -1,3 +1,5 @@
+use crate::lexer::{ Token };
+
 #[derive(Debug)]
 pub enum ErrorType {
     UnexpectedToken,

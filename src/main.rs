@@ -15,6 +15,7 @@ fn main() {
     }
     if let Err(err) = parse_main(&args[1]) {
         eprintln!("{}\n{}",args[1] , err);
+    } else {
     }
 }
 
