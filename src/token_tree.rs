@@ -64,8 +64,34 @@ impl TokenTree {
         }
     }
 
+    fn unary(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
+        match list[*n].kind {
+            TokenKind::Plus => {
+                *n += 1;
+                TokenTree::primary(n, list)
+            },
+            TokenKind::Minus => {
+                let m = *n;
+                *n += 1;
+                let zero = TokenTree {
+                    kind: TokenKind::Number(0),
+                    pos: list[m].pos,
+                    lhs: None,
+                    rhs: None,
+                };
+                Ok(TokenTree {
+                    kind: TokenKind::Minus,
+                    pos: list[m].pos,
+                    lhs: Some(Rc::new(RefCell::new(zero))),
+                    rhs: Some(Rc::new(RefCell::new(TokenTree::primary(n, list)?))),
+                })
+            },
+            _ => TokenTree::primary(n, list),
+        }
+    }
+
     fn mul(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
-        let mut token = TokenTree::primary(n, list)?;
+        let mut token = TokenTree::unary(n, list)?;
 
         loop {
             let m = *n;
@@ -77,7 +103,7 @@ impl TokenTree {
                         kind: now.kind,
                         pos: now.pos,
                         lhs: Some(Rc::new(RefCell::new(token))),
-                        rhs: Some(Rc::new(RefCell::new(TokenTree::primary(n, list)?))),
+                        rhs: Some(Rc::new(RefCell::new(TokenTree::unary(n, list)?))),
                     };
                 },
                 TokenKind::Devide => {
@@ -86,7 +112,7 @@ impl TokenTree {
                         kind: now.kind,
                         pos: now.pos,
                         lhs: Some(Rc::new(RefCell::new(token))),
-                        rhs: Some(Rc::new(RefCell::new(TokenTree::primary(n, list)?))),
+                        rhs: Some(Rc::new(RefCell::new(TokenTree::unary(n, list)?))),
                     };
                 },
                 _ => return Ok(token),
