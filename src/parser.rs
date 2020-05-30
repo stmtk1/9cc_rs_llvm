@@ -17,9 +17,8 @@ impl Parser {
         })
     }
 
-    pub fn parse(&mut self) -> Result<(), QccError> {
-        Parser::parse_tokens(0, &self.tokens)?;
-        Ok(())
+    pub fn parse(&mut self) -> Result<usize, QccError> {
+        Parser::parse_tokens(0, &self.tokens)
     }
 
     fn parse_tokens(n: usize, tokens: &TokenTree) -> Result<usize, QccError> {
@@ -31,10 +30,35 @@ impl Parser {
                 Ok(n + 1)
             },
             TokenKind::Plus => {
-                let a = Parser::parse_tokens(n, tokens.lhs.as_ref().unwrap().borrow())?;
-                let b = Parser::parse_tokens(a + 1, tokens.rhs.as_ref().unwrap().borrow())?;
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
                 println!("\t%{} = add i32 %{}, %{}", b + 1, a, b);
                 Ok(b + 1)
+            },
+            TokenKind::Minus => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = sub i32 %{}, %{}", b + 1, a, b);
+                Ok(b + 1)
+            },
+            TokenKind::Multiply => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = mul i32 %{}, %{}", b + 1, a, b);
+                Ok(b + 1)
+            },
+            TokenKind::Devide => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = sdiv i32 %{}, %{}", b + 1, a, b);
+                Ok(b + 1)
+            },
+            _ => {
+                Err(QccError{
+                    kind: ErrorType::UnexpectedToken,
+                    pos: tokens.pos,
+                    message: String::from("unexpected token"),
+                })
             }
         }
     }

@@ -24,8 +24,8 @@ fn parse_main(s: &str) -> Result<(), QccError> {
 
     println!("define i32 @main() local_unnamed_addr #0 {{");
     println!("entry:");
-    parser.parse()?;
-    println!("\tret i32 {}", 0);
+    let n = parser.parse()?;
+    println!("\tret i32 %{}", n);
     println!("}}");
     Ok(())
 }
