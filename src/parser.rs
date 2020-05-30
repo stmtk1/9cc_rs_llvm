@@ -18,12 +18,29 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<(), QccError> {
-        let a = self.alloc()?;
+        Parser::parse_tokens(0, &self.tokens)?;
         Ok(())
     }
 
+    fn parse_tokens(n: usize, tokens: &TokenTree) -> Result<usize, QccError> {
+        match tokens.kind {
+            TokenKind::Number(i) => {
+                println!("\t%{} = alloca i32, align 4", n);
+                println!("\tstore i32 {}, i32* %{}, align 4", i, n);
+                println!("\t%{} = load i32, i32* %{}, align 4", n + 1, n);
+                Ok(n + 1)
+            },
+            TokenKind::Plus => {
+                let a = Parser::parse_tokens(n, tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = add i32 %{}, %{}", b + 1, a, b);
+                Ok(b + 1)
+            }
+        }
+    }
+
+    /*
     fn alloc(&mut self) -> Result<usize, QccError> {
-        /*
         if let TokenKind::Number(i) = self.tokens.kind {
             println!("\t%{} = alloca i32, align 4", self.num);
             println!("\tstore i32 {}, i32* %{}, align 4", i, self.num);
@@ -38,9 +55,9 @@ impl Parser {
                 message: String::from("This expression expected number"),
             })
         }
-        */
         Ok(0)
     }
+    */
 
     /*
     fn additonal_ops(&mut self, initial_pos: usize) -> Result<usize, QccError> {
