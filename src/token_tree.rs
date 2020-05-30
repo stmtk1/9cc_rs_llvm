@@ -29,20 +29,38 @@ impl TokenTree {
 
     fn primary(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
         let m = *n;
-        if let TokenKind::Number(_) = list[m].kind {
-            *n += 1;
-            Ok(TokenTree {
-                kind: list[m].kind.clone(),
-                pos: list[m].pos,
-                lhs: None,
-                rhs: None,
-            })
-        } else {
-            Err(QccError {
-                kind: ErrorType::UnexpectedToken,
-                pos: list[*n].pos,
-                message: String::from("this expression expected a number"),
-            })
+        match list[m].kind {
+            TokenKind::Number(_) => {
+                *n += 1;
+                Ok(TokenTree {
+                    kind: list[m].kind.clone(),
+                    pos: list[m].pos,
+                    lhs: None,
+                    rhs: None,
+                })
+            },
+            TokenKind::LParen => {
+                *n += 1;
+                let ret = TokenTree::expr(n, list)?;
+                match list[*n].kind {
+                    TokenKind::RParen => {
+                        *n += 1;
+                        Ok(ret)
+                    },
+                    _ => Err(QccError{
+                        kind: ErrorType::UnexpectedToken,
+                        pos: list[*n].pos,
+                        message: String::from("this token expected )"),
+                    })
+                }
+            },
+            _ => {
+                Err(QccError {
+                    kind: ErrorType::UnexpectedToken,
+                    pos: list[*n].pos,
+                    message: String::from("this expression expected a number"),
+                })
+            }
         }
     }
 
