@@ -18,6 +18,10 @@ pub enum TreeKind {
     Devide,
     Equal,
     NotEqual,
+    Less,
+    Greater,
+    LessEqual,
+    GreaterEqual,
 }
 
 impl TokenTree {
@@ -42,7 +46,7 @@ impl TokenTree {
     }
 
     fn equal(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
-        let mut token = TokenTree::add(n, list)?;
+        let mut token = TokenTree::relational(n, list)?;
 
         loop {
             let m = *n;
@@ -57,7 +61,7 @@ impl TokenTree {
                                 kind: TreeKind::Equal,
                                 pos: list[m].pos,
                                 lhs: Some(Rc::new(RefCell::new(token))),
-                                rhs: Some(Rc::new(RefCell::new(TokenTree::add(n, list)?))),
+                                rhs: Some(Rc::new(RefCell::new(TokenTree::relational(n, list)?))),
                             };
                         },
                         TokenKind::Not => {
@@ -67,7 +71,7 @@ impl TokenTree {
                                 kind: TreeKind::NotEqual,
                                 pos: list[m].pos,
                                 lhs: Some(Rc::new(RefCell::new(token))),
-                                rhs: Some(Rc::new(RefCell::new(TokenTree::add(n, list)?))),
+                                rhs: Some(Rc::new(RefCell::new(TokenTree::relational(n, list)?))),
                             };
                         },
                         _ => return Err(QccError {
@@ -75,6 +79,46 @@ impl TokenTree {
                             pos: list[*n].pos,
                             message: String::from("unexpected token"),
                         }),
+                    }
+                },
+                _ => return Ok(token),
+            }
+        }
+    }
+
+    fn relational(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
+        let mut token = TokenTree::add(n, list)?;
+
+        loop {
+            let m = *n;
+            let now = list[m].clone();
+            match now.kind {
+                TokenKind::Less | TokenKind::Greater => {
+                    match list[*n + 1].kind {
+                        TokenKind::Equal => {
+                            let m = *n;
+                            *n += 2;
+                            let kind = match now.kind {
+                                TokenKind::Less => TreeKind::LessEqual,
+                                _ => TreeKind::GreaterEqual,
+                            };
+                            token = TokenTree {
+                                kind,
+                                pos: list[m].pos,
+                                lhs: Some(Rc::new(RefCell::new(token))),
+                                rhs: Some(Rc::new(RefCell::new(TokenTree::add(n, list)?))),
+                            };
+                        },
+                        _ => {
+                            let m = *n;
+                            *n += 1;
+                            token = TokenTree {
+                                kind: kind_convert(&list[m])?,
+                                pos: list[m].pos,
+                                lhs: Some(Rc::new(RefCell::new(token))),
+                                rhs: Some(Rc::new(RefCell::new(TokenTree::add(n, list)?))),
+                            }
+                        },
                     }
                 },
                 _ => return Ok(token),
@@ -229,6 +273,8 @@ fn kind_convert(token: &Token) -> Result<TreeKind, QccError> {
         TokenKind::Minus => Ok(TreeKind::Minus),
         TokenKind::Multiply => Ok(TreeKind::Multiply),
         TokenKind::Devide => Ok(TreeKind::Devide),
+        TokenKind::Less => Ok(TreeKind::Less),
+        TokenKind::Greater => Ok(TreeKind::Greater),
         _ => Err(QccError{
             kind: ErrorType::UnexpectedToken,
             pos: token.pos,

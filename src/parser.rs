@@ -64,6 +64,34 @@ impl Parser {
                 println!("\t%{} = sext i1 %{} to i32", b + 2, b + 1);
                 Ok(b + 2)
             },
+            TreeKind::Less => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = icmp ult i32 %{}, %{}", b + 1, a, b);
+                println!("\t%{} = sext i1 %{} to i32", b + 2, b + 1);
+                Ok(b + 2)
+            },
+            TreeKind::LessEqual => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = icmp ule i32 %{}, %{}", b + 1, a, b);
+                println!("\t%{} = sext i1 %{} to i32", b + 2, b + 1);
+                Ok(b + 2)
+            },
+            TreeKind::Greater => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = icmp ugt i32 %{}, %{}", b + 1, a, b);
+                println!("\t%{} = sext i1 %{} to i32", b + 2, b + 1);
+                Ok(b + 2)
+            },
+            TreeKind::GreaterEqual => {
+                let a = Parser::parse_tokens(n, &tokens.lhs.as_ref().unwrap().borrow())?;
+                let b = Parser::parse_tokens(a + 1, &tokens.rhs.as_ref().unwrap().borrow())?;
+                println!("\t%{} = icmp uge i32 %{}, %{}", b + 1, a, b);
+                println!("\t%{} = sext i1 %{} to i32", b + 2, b + 1);
+                Ok(b + 2)
+            },
         }
     }
 }
