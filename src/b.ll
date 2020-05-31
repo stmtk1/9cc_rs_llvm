@@ -19,5 +19,10 @@ entry:
 	%11 = load i32, i32* %10, align 4
 	%12 = sub i32 %9, %11
 	%13 = mul i32 %7, %12
-	ret i32 %13
+	%14 = alloca i32, align 4
+	store i32 3, i32* %14, align 4
+	%15 = load i32, i32* %14, align 4
+	%16 = icmp eq i32 %13, %15
+	%17 = sext i1 %16 to i32
+	ret i32 %17
 }

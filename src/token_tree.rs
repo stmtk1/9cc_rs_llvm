@@ -4,10 +4,20 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 pub struct TokenTree {
-    pub kind: TokenKind,
+    pub kind: TreeKind,
     pub pos: usize,
     pub lhs: Option<Rc<RefCell<TokenTree>>>,
     pub rhs: Option<Rc<RefCell<TokenTree>>>,
+}
+
+pub enum TreeKind {
+    Number(i32),
+    Plus,
+    Minus,
+    Multiply,
+    Devide,
+    Equal,
+    NotEqual,
 }
 
 impl TokenTree {
@@ -27,13 +37,58 @@ impl TokenTree {
         }
     }
 
+    fn expr(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
+        TokenTree::equal(n, list)
+    }
+
+    fn equal(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
+        let mut token = TokenTree::add(n, list)?;
+
+        loop {
+            let m = *n;
+            let now = list[m].clone();
+            match now.kind {
+                TokenKind::Equal => {
+                    match list[*n + 1].kind {
+                        TokenKind::Equal => {
+                            let m = *n;
+                            *n += 2;
+                            token = TokenTree {
+                                kind: TreeKind::Equal,
+                                pos: list[m].pos,
+                                lhs: Some(Rc::new(RefCell::new(token))),
+                                rhs: Some(Rc::new(RefCell::new(TokenTree::add(n, list)?))),
+                            };
+                        },
+                        TokenKind::Not => {
+                            let m = *n;
+                            *n += 2;
+                            token = TokenTree {
+                                kind: TreeKind::NotEqual,
+                                pos: list[m].pos,
+                                lhs: Some(Rc::new(RefCell::new(token))),
+                                rhs: Some(Rc::new(RefCell::new(TokenTree::add(n, list)?))),
+                            };
+                        },
+                        _ => return Err(QccError {
+                            kind: ErrorType::UnexpectedToken,
+                            pos: list[*n].pos,
+                            message: String::from("unexpected token"),
+                        }),
+                    }
+                },
+                _ => return Ok(token),
+            }
+        }
+    }
+
     fn primary(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
         let m = *n;
         match list[m].kind {
             TokenKind::Number(_) => {
                 *n += 1;
                 Ok(TokenTree {
-                    kind: list[m].kind.clone(),
+                    kind: kind_convert(&list[m])?,
                     pos: list[m].pos,
                     lhs: None,
                     rhs: None,
@@ -74,13 +129,13 @@ impl TokenTree {
                 let m = *n;
                 *n += 1;
                 let zero = TokenTree {
-                    kind: TokenKind::Number(0),
+                    kind: TreeKind::Number(0),
                     pos: list[m].pos,
                     lhs: None,
                     rhs: None,
                 };
                 Ok(TokenTree {
-                    kind: TokenKind::Minus,
+                    kind: kind_convert(&list[m])?,
                     pos: list[m].pos,
                     lhs: Some(Rc::new(RefCell::new(zero))),
                     rhs: Some(Rc::new(RefCell::new(TokenTree::primary(n, list)?))),
@@ -100,7 +155,7 @@ impl TokenTree {
                 TokenKind::Multiply => {
                     *n += 1;
                     token = TokenTree {
-                        kind: now.kind,
+                        kind: kind_convert(&now)?,
                         pos: now.pos,
                         lhs: Some(Rc::new(RefCell::new(token))),
                         rhs: Some(Rc::new(RefCell::new(TokenTree::unary(n, list)?))),
@@ -109,7 +164,7 @@ impl TokenTree {
                 TokenKind::Devide => {
                     *n += 1;
                     token = TokenTree {
-                        kind: now.kind,
+                        kind: kind_convert(&now)?,
                         pos: now.pos,
                         lhs: Some(Rc::new(RefCell::new(token))),
                         rhs: Some(Rc::new(RefCell::new(TokenTree::unary(n, list)?))),
@@ -120,7 +175,7 @@ impl TokenTree {
         }
     }
 
-    fn expr(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
+    fn add(n: &mut usize, list: &Vec<Token>) -> Result<TokenTree, QccError> {
         let mut token = TokenTree::mul(n, list)?;
 
         loop {
@@ -130,7 +185,7 @@ impl TokenTree {
                 TokenKind::Plus => {
                     *n += 1;
                     token = TokenTree {
-                        kind: now.kind,
+                        kind: kind_convert(&now)?,
                         pos: now.pos,
                         lhs: Some(Rc::new(RefCell::new(token))),
                         rhs: Some(Rc::new(RefCell::new(TokenTree::mul(n, list)?))),
@@ -139,7 +194,7 @@ impl TokenTree {
                 TokenKind::Minus => {
                     *n += 1;
                     token = TokenTree {
-                        kind: now.kind,
+                        kind: kind_convert(&now)?,
                         pos: now.pos,
                         lhs: Some(Rc::new(RefCell::new(token))),
                         rhs: Some(Rc::new(RefCell::new(TokenTree::mul(n, list)?))),
@@ -165,4 +220,19 @@ fn get_token_list(s: &str) -> Result<Vec<Token>, QccError> {
         next_token = lexer.next_token()?;
     }
     Ok(tokens)
+}
+
+fn kind_convert(token: &Token) -> Result<TreeKind, QccError> {
+    match token.kind {
+        TokenKind::Number(i) => Ok(TreeKind::Number(i)),
+        TokenKind::Plus => Ok(TreeKind::Plus),
+        TokenKind::Minus => Ok(TreeKind::Minus),
+        TokenKind::Multiply => Ok(TreeKind::Multiply),
+        TokenKind::Devide => Ok(TreeKind::Devide),
+        _ => Err(QccError{
+            kind: ErrorType::UnexpectedToken,
+            pos: token.pos,
+            message: String::from("unexpected token"),
+        })
+    }
 }

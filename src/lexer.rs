@@ -15,6 +15,8 @@ pub enum TokenKind {
     Devide,
     LParen,
     RParen,
+    Equal,
+    Not,
     End,
 }
 
@@ -49,6 +51,8 @@ impl<'a> Lexer<'a> {
             b'/' => self.lex_devide(),
             b'(' => self.lex_lparen(),
             b')' => self.lex_rparen(),
+            b'=' => self.lex_equal(),
+            b'!' => self.lex_not(),
             _ => Err(QccError{
                 kind: ErrorType::UnexpectedChar,
                 pos: self.pos,
@@ -101,6 +105,22 @@ impl<'a> Lexer<'a> {
         self.pos += 1;
         Ok(Token {
             kind: TokenKind::RParen,
+            pos: self.pos -1,
+        })
+    }
+
+    fn lex_equal(&mut self) -> Result<Token, QccError> {
+        self.pos += 1;
+        Ok(Token {
+            kind: TokenKind::Equal,
+            pos: self.pos -1,
+        })
+    }
+
+    fn lex_not(&mut self) -> Result<Token, QccError> {
+        self.pos += 1;
+        Ok(Token {
+            kind: TokenKind::Not,
             pos: self.pos -1,
         })
     }
